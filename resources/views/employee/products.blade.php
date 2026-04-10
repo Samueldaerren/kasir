@@ -36,7 +36,7 @@
                 <tr>
                     <td>{{ $product->id }}</td>
                     <td>{{ $product->name }}</td>
-                    <td>{{ $product->price }}</td>
+                    <td>{{ $product->harga_rupiah }}</td>
                     <td>{{ $product->stock }}</td>
                     <td>
                         @if($product->image_url)

@@ -35,6 +35,20 @@ class Produk extends Model
         return $this->attributes['price'] ?? null;
     }
 
+    public function getHargaRupiahAttribute()
+    {
+        return $this->formatRupiah($this->harga);
+    }
+
+    protected function formatRupiah($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return 'Rp ' . number_format($value, 0, ',', '.');
+    }
+
     public function getStokAttribute()
     {
         return $this->attributes['stock'] ?? null;

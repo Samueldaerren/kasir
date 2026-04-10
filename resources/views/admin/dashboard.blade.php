@@ -28,7 +28,7 @@
                 <a href="{{ route('admin.products') }}" class="btn btn-success w-100 mb-3">Manage Products</a>
             </div>
             <div class="col-md-3">
-                <a href="{{ route('admin.orders') }}" class="btn btn-info w-100 mb-3">View Orders</a>
+                <a href="{{ route('admin.orders') }}" class="btn btn-info w-100 mb-3">History Orders</a>
             </div>
         </div>
     </div>

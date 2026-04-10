@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AdminOrdersExport;
 use App\Models\User;
 use App\Models\Produk;
 use App\Models\Order;
@@ -68,6 +71,11 @@ class AdminController extends Controller
 
     public function deleteUser($id)
     {
+        // Mencegah admin menghapus akun mereka sendiri
+        if (auth()->id() == $id) {
+            return redirect()->route('admin.users')->with('error', 'Anda tidak dapat menghapus akun admin Anda sendiri.');
+        }
+
         User::findOrFail($id)->delete();
         return redirect()->route('admin.users')->with('success', 'User deleted successfully.');
     }
@@ -88,12 +96,29 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
+            'price' => 'required|integer|min:0|max:100000',
+            'stock' => 'required|integer|min:0|max:100',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
 
+        $existingProduct = Produk::where('name', $request->name)->first();
+
         $data = $request->only(['name', 'price', 'stock']);
+
+        if ($existingProduct) {
+            $newStock = $existingProduct->stock + $request->stock;
+
+            if ($newStock > 100) {
+                return back()->withErrors(['stock' => 'Total stock cannot exceed 100 for an existing product.'])->withInput();
+            }
+
+            $data['stock'] = $newStock;
+            // Keep the existing product image when merging by name
+
+            $existingProduct->update($data);
+
+            return redirect()->route('admin.products')->with('success', 'Existing product stock updated successfully.');
+        }
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
@@ -114,13 +139,12 @@ class AdminController extends Controller
     {
         $product = Produk::findOrFail($id);
         $request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
+            'name' => ['required', Rule::unique('produks', 'name')->ignore($product->id)],
+            'price' => 'required|integer|min:0|max:100000',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
 
-        $data = $request->only(['name', 'price', 'stock']);
+        $data = $request->only(['name', 'price']);
 
         if ($request->hasFile('image')) {
             if ($product->image && Storage::disk('public')->exists($product->image)) {
@@ -140,6 +164,18 @@ class AdminController extends Controller
         return redirect()->route('admin.products')->with('success', 'Product deleted successfully.');
     }
 
+    public function updateStock(Request $request, $id)
+    {
+        $request->validate([
+            'stock' => 'required|integer|min:0|max:100',
+        ]);
+
+        $product = Produk::findOrFail($id);
+        $product->update(['stock' => $request->stock]);
+
+        return redirect()->route('admin.products')->with('success', 'Stock updated successfully.');
+    }
+
     // Orders history
     public function orders()
     {
@@ -151,5 +187,10 @@ class AdminController extends Controller
     {
         $order = Order::with('customer', 'detailOrders.produk')->findOrFail($id);
         return view('admin.order-detail', compact('order'));
+    }
+
+    public function exportOrders()
+    {
+        return Excel::download(new AdminOrdersExport, 'admin_orders.xlsx');
     }
 }

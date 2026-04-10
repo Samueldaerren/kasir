@@ -25,7 +25,10 @@
                 <a href="{{ route('employee.products') }}" class="btn btn-primary w-100 mb-3">List Products</a>
             </div>
             <div class="col-md-3">
-                <a href="{{ route('employee.products') }}" class="btn btn-primary w-100 mb-3">Transaction Products</a>
+                <a href="{{ route('employee.transactions.create') }}" class="btn btn-success w-100 mb-3">Create Transaction</a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ route('employee.orders') }}" class="btn btn-info w-100 mb-3">Transaction History</a>
             </div>
         </div>
     </div>

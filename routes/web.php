@@ -28,14 +28,22 @@ Route::middleware('auth')->group(function () {
         Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
         Route::get('/products/{id}/edit', [AdminController::class, 'editProduct'])->name('admin.products.edit');
         Route::put('/products/{id}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
+        Route::patch('/products/{id}/update-stock', [AdminController::class, 'updateStock'])->name('admin.products.update-stock');
         Route::delete('/products/{id}', [AdminController::class, 'deleteProduct'])->name('admin.products.destroy');
 
         Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders');
+        Route::get('/orders/export', [AdminController::class, 'exportOrders'])->name('admin.orders.export');
         Route::get('/orders/{id}', [AdminController::class, 'orderDetail'])->name('admin.order.detail');
     });
 
     Route::prefix('employee')->middleware('role:employee')->group(function () {
         Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('employee.dashboard');
         Route::get('/products', [EmployeeController::class, 'products'])->name('employee.products');
+        Route::get('/transactions', [EmployeeController::class, 'createTransaction'])->name('employee.transactions.create');
+        Route::post('/transactions', [EmployeeController::class, 'storeTransaction'])->name('employee.transactions.store');
+        Route::get('/check-customer-points', [EmployeeController::class, 'checkCustomerPoints'])->name('employee.check-customer-points');
+        Route::get('/orders', [EmployeeController::class, 'orders'])->name('employee.orders');
+        Route::get('/orders/export', [EmployeeController::class, 'exportOrders'])->name('employee.orders.export');
+        Route::get('/orders/{id}', [EmployeeController::class, 'orderDetail'])->name('employee.order.detail');
     });
 });

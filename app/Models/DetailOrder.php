@@ -10,6 +10,8 @@ class DetailOrder extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
+        'product_id',
+        'order_id',
         'amount',
         'sub_total',
     ];
@@ -27,7 +29,7 @@ class DetailOrder extends Model
      */
     public function produk()
     {
-        return $this->belongsTo(Produk::class, 'produk_id');
+        return $this->belongsTo(Produk::class, 'product_id');
     }
     public function getJumlahAttribute()
     {
@@ -41,4 +43,24 @@ class DetailOrder extends Model
             return ($this->attributes['sub_total'] ?? 0) / $amount;
         }
         return null;
-    }}
+    }
+
+    public function getHargaRupiahAttribute()
+    {
+        return $this->formatRupiah($this->harga);
+    }
+
+    public function getSubTotalRupiahAttribute()
+    {
+        return $this->formatRupiah($this->attributes['sub_total'] ?? null);
+    }
+
+    protected function formatRupiah($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return 'Rp ' . number_format($value, 0, ',', '.');
+    }
+}

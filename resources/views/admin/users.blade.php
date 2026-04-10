@@ -21,6 +21,21 @@
     </nav>
     <div class="container mt-5">
         <h1>Manage Users</h1>
+        
+        @if($message = session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ $message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if($message = session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ $message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <a href="{{ route('admin.users.create') }}" class="btn btn-primary mb-3">Add User</a>
         <table class="table">
             <thead>
@@ -41,11 +56,15 @@
                     <td>{{ $user->role }}</td>
                     <td>
                         <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                        <form method="POST" action="{{ route('admin.users.destroy', $user->id) }}" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                        </form>
+                        @if(auth()->id() !== $user->id)
+                            <form method="POST" action="{{ route('admin.users.destroy', $user->id) }}" class="d-inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                            </form>
+                        @else
+                            <button class="btn btn-sm btn-danger" disabled title="Anda tidak dapat menghapus akun Anda sendiri">Delete</button>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

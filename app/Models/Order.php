@@ -10,6 +10,8 @@ class Order extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
+        'employee_id',
+        'customer_id',
         'sale_date',
         'total_price',
         'total_pay',
@@ -47,8 +49,32 @@ class Order extends Model
         return $this->attributes['total_price'] ?? null;
     }
 
+    public function getTotalPriceRupiahAttribute()
+    {
+        return $this->formatRupiah($this->total_price);
+    }
+
+    public function getTotalPayRupiahAttribute()
+    {
+        return $this->formatRupiah($this->total_pay);
+    }
+
+    public function getTotalReturnRupiahAttribute()
+    {
+        return $this->formatRupiah($this->total_return);
+    }
+
     public function getTanggalOrderAttribute()
     {
         return $this->attributes['sale_date'] ?? null;
+    }
+
+    protected function formatRupiah($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return 'Rp ' . number_format($value, 0, ',', '.');
     }
 }

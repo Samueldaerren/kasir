@@ -30,11 +30,14 @@
             </div>
             <div class="mb-3">
                 <label for="price" class="form-label">Price</label>
-                <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ $product->price }}" required>
+                <input type="number" step="0.01" min="0" max="100000" class="form-control" id="price" name="price" value="{{ $product->price }}" required>
+                @error('price')
+                    <div class="text-danger mt-1">{{ $message }}</div>
+                @enderror
             </div>
             <div class="mb-3">
                 <label for="stock" class="form-label">Stock</label>
-                <input type="number" class="form-control" id="stock" name="stock" value="{{ $product->stock }}" required>
+                <input type="number" class="form-control" id="stock" name="stock" value="{{ $product->stock }}" disabled>
             </div>
             <div class="mb-3">
                 <label for="image" class="form-label">Product Image</label>
