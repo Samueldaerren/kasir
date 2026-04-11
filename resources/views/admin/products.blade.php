@@ -23,10 +23,10 @@
         <h1>Manage Products</h1>
         <a href="{{ route('admin.products.create') }}" class="btn btn-primary mb-3">Add Product</a>
 
-        @if ($errors->any())
+        @if ($errors->default->any())
             <div class="alert alert-danger">
                 <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
+                    @foreach ($errors->default->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
@@ -91,8 +91,10 @@
                         </div>
                         <div class="mb-3">
                             <label for="new_stock" class="form-label">New Stock</label>
-                            <input type="number" class="form-control" id="new_stock" name="stock" min="0" max="100" required>
-                            <div class="form-text">Max stock nilai 100. Stok tidak boleh lebih dari 100.</div>
+                            <input type="number" class="form-control @error('stock', 'stock') is-invalid @enderror" id="new_stock" name="stock" min="0" max="100" value="{{ old('stock') }}">
+                            @error('stock', 'stock')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -104,19 +106,43 @@
         </div>
     </div>
 
-    <script>
-        const updateStockModal = document.getElementById('updateStockModal');
-        updateStockModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const productId = button.getAttribute('data-product-id');
-            const productName = button.getAttribute('data-product-name');
-            const currentStock = button.getAttribute('data-current-stock');
-
-            document.getElementById('product_name').value = productName;
-            document.getElementById('new_stock').value = currentStock;
-            document.getElementById('updateStockForm').action = '{{ route("admin.products.update-stock", ":id") }}'.replace(':id', productId);
-        });
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const updateStockModalElement = document.getElementById('updateStockModal');
+
+        if (updateStockModalElement) {
+            updateStockModalElement.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const productId = button.getAttribute('data-product-id');
+                const productName = button.getAttribute('data-product-name');
+                const currentStock = button.getAttribute('data-current-stock');
+
+                document.getElementById('product_name').value = productName;
+                document.getElementById('new_stock').value = currentStock;
+                document.getElementById('updateStockForm').action = '{{ route("admin.products.update-stock", ":id") }}'.replace(':id', productId);
+            });
+
+            const stockModalId = '{{ session('stock_modal_id') ?? '' }}';
+            if (stockModalId) {
+                const button = document.querySelector(`[data-product-id="${stockModalId}"]`);
+                if (button) {
+                    const productName = button.getAttribute('data-product-name');
+                    const currentStock = button.getAttribute('data-current-stock');
+                    const newStockInput = document.getElementById('new_stock');
+                    const productNameInput = document.getElementById('product_name');
+                    const updateStockForm = document.getElementById('updateStockForm');
+
+                    productNameInput.value = productName;
+                    updateStockForm.action = '{{ route("admin.products.update-stock", ":id") }}'.replace(':id', stockModalId);
+                    if (!newStockInput.value) {
+                        newStockInput.value = currentStock;
+                    }
+
+                    const modal = new bootstrap.Modal(updateStockModalElement);
+                    modal.show();
+                }
+            }
+        }
+    </script>
 </body>
 </html>

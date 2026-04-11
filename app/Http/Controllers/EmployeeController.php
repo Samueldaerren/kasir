@@ -17,7 +17,37 @@ class EmployeeController extends Controller
 {
     public function dashboard()
     {
-        return view('employee.dashboard');
+        $lowStockProducts = Produk::where('stock', '<=', 5)->orderBy('stock')->limit(5)->get();
+
+        $totalRevenue = Order::where('employee_id', Auth::id())->sum('total_price');
+        $dailyRevenue = Order::where('employee_id', Auth::id())
+            ->whereDate('sale_date', Carbon::today())
+            ->sum('total_price');
+
+        $monthlyRevenue = Order::where('employee_id', Auth::id())
+            ->whereYear('sale_date', Carbon::now()->year)
+            ->whereMonth('sale_date', Carbon::now()->month)
+            ->sum('total_price');
+
+        $yearlyRevenue = Order::where('employee_id', Auth::id())
+            ->whereYear('sale_date', Carbon::now()->year)
+            ->sum('total_price');
+
+        $memberCount = Customer::where('phone_number', '!=', '0000000000')->count();
+        $nonMemberCount = Customer::where('phone_number', '0000000000')->count();
+
+        return view(
+            'employee.dashboard',
+            compact(
+                'lowStockProducts',
+                'totalRevenue',
+                'dailyRevenue',
+                'monthlyRevenue',
+                'yearlyRevenue',
+                'memberCount',
+                'nonMemberCount'
+            )
+        );
     }
 
     public function products()
@@ -63,12 +93,27 @@ class EmployeeController extends Controller
             'products' => 'required|array',
             'products.*' => 'integer|min:0',
             'total_pay' => 'required|integer|min:0',
+        ], [
+            'customer_type.required' => 'Tipe customer wajib dipilih.',
+            'customer_type.in' => 'Tipe customer tidak valid.',
+            'phone_number.required_if' => 'Nomor telepon wajib diisi untuk member.',
+            'name.required_if' => 'Nama customer wajib diisi untuk member.',
+            'use_points.boolean' => 'Pilihan gunakan poin tidak valid.',
+            'points_used.integer' => 'Poin harus berupa angka bulat.',
+            'points_used.min' => 'Poin tidak boleh negatif.',
+            'products.required' => 'Pilih minimal satu produk.',
+            'products.array' => 'Daftar produk tidak valid.',
+            'products.*.integer' => 'Jumlah produk harus berupa angka.',
+            'products.*.min' => 'Jumlah produk tidak boleh negatif.',
+            'total_pay.required' => 'Total bayar wajib diisi.',
+            'total_pay.integer' => 'Total bayar harus berupa angka bulat.',
+            'total_pay.min' => 'Total bayar tidak boleh negatif.',
         ]);
 
         $productQuantities = array_filter($request->input('products', []), fn ($qty) => $qty > 0);
 
         if (empty($productQuantities)) {
-            return back()->withErrors(['products' => 'Please select at least one product.'])->withInput();
+            return back()->withErrors(['products' => 'Silakan pilih minimal satu produk.'])->withInput();
         }
 
         $products = Produk::whereIn('id', array_keys($productQuantities))->get()->keyBy('id');
@@ -135,7 +180,7 @@ class EmployeeController extends Controller
         $totalPay = (int) $request->input('total_pay', 0);
 
         if ($totalPay < $finalPrice) {
-            return back()->withErrors(['total_pay' => 'Amount paid must be at least the final total price.'])->withInput();
+            return back()->withErrors(['total_pay' => 'Total bayar kurang dari total harga.'])->withInput();
         }
 
         $totalReturn = $totalPay - $finalPrice;
@@ -146,7 +191,8 @@ class EmployeeController extends Controller
             ? $customer->total_poin - $pointsUsed + $pointEarned
             : $pointEarned;
 
-        DB::transaction(function () use ($customer, $detailItems, $totalPrice, $totalPay, $totalReturn, $pointsUsed, $pointEarned) {
+        $order = null;
+        DB::transaction(function () use ($customer, $detailItems, $totalPrice, $totalPay, $totalReturn, $pointsUsed, $pointEarned, &$order) {
             $customer->save();
 
             $order = Order::create([
@@ -166,18 +212,36 @@ class EmployeeController extends Controller
             }
         });
 
-        return redirect()->route('employee.orders')->with('success', 'Transaction created successfully.');
+        return redirect()->route('employee.order.detail', $order->id)->with('success', 'Transaction created successfully.');
     }
 
-    public function orders()
+    public function orders(Request $request)
     {
-        $orders = Order::with('customer')->where('employee_id', Auth::id())->get();
-        return view('employee.orders', compact('orders'));
+        $date = $request->input('date');
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+
+        $query = Order::with('customer')->where('employee_id', Auth::id());
+
+        if ($fromDate && $toDate) {
+            $query->whereDate('sale_date', '>=', Carbon::parse($fromDate))
+                  ->whereDate('sale_date', '<=', Carbon::parse($toDate));
+        } elseif ($fromDate) {
+            $query->whereDate('sale_date', '>=', Carbon::parse($fromDate));
+        } elseif ($toDate) {
+            $query->whereDate('sale_date', '<=', Carbon::parse($toDate));
+        } elseif ($date) {
+            $query->whereDate('sale_date', Carbon::parse($date));
+        }
+
+        $orders = $query->get();
+
+        return view('employee.orders', compact('orders', 'date', 'fromDate', 'toDate'));
     }
 
     public function orderDetail($id)
     {
-        $order = Order::with('customer', 'detailOrders.produk')->findOrFail($id);
+        $order = Order::with('employee', 'customer', 'detailOrders.produk')->findOrFail($id);
 
         if ($order->employee_id !== Auth::id()) {
             abort(403);
@@ -186,8 +250,8 @@ class EmployeeController extends Controller
         return view('employee.order-detail', compact('order'));
     }
 
-    public function exportOrders()
+    public function exportOrders(Request $request)
     {
-        return Excel::download(new EmployeeOrdersExport, 'employee_orders.xlsx');
+        return Excel::download(new EmployeeOrdersExport($request->only(['from_date', 'to_date', 'date'])), 'employee_orders.xlsx');
     }
 }

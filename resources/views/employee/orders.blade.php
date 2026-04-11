@@ -23,9 +23,24 @@
     <div class="container mt-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1>Your Orders</h1>
-            <a href="{{ route('employee.orders.export') }}" class="btn btn-success">Export Excel</a>
-        </div>
 
+            <form method="GET" action="{{ route('employee.orders') }}" class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label for="from_date" class="form-label small mb-1">Start Date</label>
+                    <input id="from_date" type="date" name="from_date" class="form-control form-control-sm" value="{{ $fromDate ?? '' }}">
+                </div>
+                <div class="col-auto">
+                    <label for="to_date" class="form-label small mb-1">End Date</label>
+                    <input id="to_date" type="date" name="to_date" class="form-control form-control-sm" value="{{ $toDate ?? '' }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ route('employee.orders.export', ['from_date' => $fromDate ?? null, 'to_date' => $toDate ?? null, 'date' => $date ?? null]) }}" class="btn btn-success btn-sm">Export Excel</a>
+                </div>
+            </form>
+        </div>
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
@@ -65,7 +80,7 @@
             </tbody>
         </table>
     </div>
-
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

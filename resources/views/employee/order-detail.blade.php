@@ -5,6 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Detail</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f4f5f7;
+        }
+        .receipt-card {
+            max-width: 720px;
+            margin: 0 auto 2rem;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .receipt-header {
+            background: #2c3e50;
+            color: #fff;
+            padding: 1rem 1.5rem;
+        }
+        .receipt-header h1 {
+            font-size: 1.3rem;
+            margin-bottom: 0.2rem;
+        }
+        .receipt-header small {
+            color: #d1d5db;
+        }
+        .receipt-section {
+            padding: 1.25rem 1.5rem;
+            font-size: 0.95rem;
+        }
+        .receipt-section + .receipt-section {
+            border-top: 1px dashed #dee2e6;
+        }
+        .receipt-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.45rem 0;
+            border-bottom: 1px solid rgba(0,0,0,.05);
+        }
+        .receipt-line:last-child {
+            border-bottom: none;
+        }
+        .receipt-label {
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+        .receipt-total {
+            font-weight: 700;
+        }
+        .receipt-small {
+            font-size: 0.88rem;
+            color: #6b7280;
+        }
+        .receipt-summary {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.7rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .receipt-summary .receipt-line {
+            border-bottom: none;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff; }
+            .receipt-card { box-shadow: none; margin: 0; }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -21,59 +87,88 @@
     </nav>
 
     <div class="container mt-5">
-        <h1>Order #{{ $order->id }}</h1>
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">Customer</div>
-                    <div class="card-body">
-                        <p><strong>Name:</strong> {{ $order->customer->name }}</p>
-                        <p><strong>Phone:</strong> {{ $order->customer->phone_number }}</p>
-                        <p><strong>Points Balance:</strong> {{ $order->customer->total_poin }}</p>
+        <div class="receipt-card shadow-sm bg-white">
+            <div class="receipt-header d-flex justify-content-between align-items-start">
+                <div>
+                    <h1>Struk Transaksi</h1>
+                    <small>Order #{{ $order->id }}</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-info">{{ $order->customer->phone_number === '0000000000' ? 'Non-member' : 'Member' }}</span>
+                    <p class="receipt-small mb-0 mt-2">{{ optional($order->employee)->name ?? 'Petugas tidak diketahui' }}</p>
+                </div>
+            </div>
+
+            <div class="receipt-section">
+                <div class="receipt-line">
+                    <div>
+                        <div class="receipt-label">Toko</div>
+                        <strong>Kasir Sederhana</strong>
+                    </div>
+                    <div class="text-end receipt-small">Jl. Wikrama No. 123<br>Kota Bogor</div>
+                </div>
+                <div class="receipt-line">
+                    <span class="receipt-label">Tanggal</span>
+                    <strong>{{ $order->sale_date }}</strong>
+                </div>
+                <div class="receipt-line">
+                    <span class="receipt-label">Petugas</span>
+                    <strong>{{ optional($order->employee)->name ?? '-' }}</strong>
+                </div>
+            </div>
+
+            <div class="receipt-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Customer</h5>
+                    <span class="receipt-small">{{ $order->customer->phone_number }}</span>
+                </div>
+                <div class="receipt-line">
+                    <span>{{ $order->customer->name }}</span>
+                    <span class="receipt-small">{{ $order->customer->phone_number }}</span>
+                </div>
+            </div>
+
+            <div class="receipt-section">
+                <h5 class="mb-3">Detail Produk</h5>
+                @foreach($order->detailOrders as $detail)
+                    <div class="receipt-line">
+                        <div>
+                            <strong>{{ $detail->produk->name }}</strong><br>
+                            <span class="receipt-small">{{ $detail->amount }} x {{ $detail->harga_rupiah }}</span>
+                        </div>
+                        <strong>{{ $detail->sub_total_rupiah }}</strong>
+                    </div>
+                @endforeach
+
+                <div class="receipt-summary">
+                    <div class="receipt-line">
+                        <span>Total Harga</span>
+                        <strong>{{ $order->total_price_rupiah }}</strong>
+                    </div>
+                    <div class="receipt-line">
+                        <span>Poin Digunakan</span>
+                        <strong>{{ $order->point_used ? 'Rp ' . number_format($order->point_used, 0, ',', '.') : 'Rp 0' }}</strong>
+                    </div>
+                    <div class="receipt-line">
+                        <span>Bayar</span>
+                        <strong>{{ $order->total_pay_rupiah }}</strong>
+                    </div>
+                    <div class="receipt-line receipt-total">
+                        <span>Kembalian</span>
+                        <strong>{{ $order->total_return_rupiah }}</strong>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">Payment</div>
-                    <div class="card-body">
-                        <p><strong>Total Price:</strong> {{ $order->total_price_rupiah }}</p>
-                        <p><strong>Points Used:</strong> {{ $order->point_used }}</p>
-                        <p><strong>Amount Paid:</strong> {{ $order->total_pay_rupiah }}</p>
-                        <p><strong>Total Return:</strong> {{ $order->total_return_rupiah }}</p>
-                        <p><strong>Points Earned:</strong> {{ $order->point_earned }}</p>
-                    </div>
-                </div>
+
+            <div class="receipt-section d-flex justify-content-between align-items-center no-print">
+                <a href="{{ route('employee.orders') }}" class="btn btn-secondary">Kembali</a>
+                <button type="button" class="btn btn-primary" onclick="window.print()">Unduh Struk (PDF)</button>
+            </div>
+
+            <div class="receipt-section receipt-small text-center">
+                Terima kasih telah melakukan transaksi.
             </div>
         </div>
-
-        <div class="card mb-4">
-            <div class="card-header">Products</div>
-            <div class="card-body">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            <th>Sub Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($order->detailOrders as $detail)
-                            <tr>
-                                <td>{{ $detail->produk->name }}</td>
-                                <td>{{ $detail->harga_rupiah }}</td>
-                                <td>{{ $detail->amount }}</td>
-                                <td>{{ $detail->sub_total_rupiah }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <a href="{{ route('employee.orders') }}" class="btn btn-secondary">Back to Orders</a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

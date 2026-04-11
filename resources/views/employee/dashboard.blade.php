@@ -19,16 +19,112 @@
         </div>
     </nav>
     <div class="container mt-5">
-        <h1>Employee Dashboard</h1>
-        <div class="row">
+        <div class="mb-4">
+            <h2>Selamat datang, {{ auth()->user()->name }}!</h2>
+            <p class="text-muted">Ringkasan transaksi dan arahan restok.</p>
+        </div>
+
+        <div class="row g-3">
             <div class="col-md-3">
-                <a href="{{ route('employee.products') }}" class="btn btn-primary w-100 mb-3">List Products</a>
+                <div class="card text-white bg-primary h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Pemasukan</h5>
+                        <p class="card-text fs-4">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</p>
+                    </div>
+                </div>
             </div>
             <div class="col-md-3">
-                <a href="{{ route('employee.transactions.create') }}" class="btn btn-success w-100 mb-3">Create Transaction</a>
+                <div class="card text-white bg-success h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Pemasukan Harian</h5>
+                        <p class="card-text fs-4">Rp {{ number_format($dailyRevenue, 0, ',', '.') }}</p>
+                    </div>
+                </div>
             </div>
             <div class="col-md-3">
-                <a href="{{ route('employee.orders') }}" class="btn btn-info w-100 mb-3">Transaction History</a>
+                <div class="card text-white bg-info h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Pemasukan Bulanan</h5>
+                        <p class="card-text fs-4">Rp {{ number_format($monthlyRevenue, 0, ',', '.') }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning h-100">
+                    <div class="card-body text-dark">
+                        <h5 class="card-title">Pemasukan Tahunan</h5>
+                        <p class="card-text fs-4">Rp {{ number_format($yearlyRevenue, 0, ',', '.') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Jumlah Member</h5>
+                        <p class="card-text display-6">{{ $memberCount }}</p>
+                        <p class="text-muted mb-0">Total customer member.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Jumlah Non Member</h5>
+                        <p class="card-text display-6">{{ $nonMemberCount }}</p>
+                        <p class="text-muted mb-0">Total customer non-member.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        Produk yang perlu di restok
+                    </div>
+                    <div class="card-body">
+                        @if($lowStockProducts->isEmpty())
+                            <div class="alert alert-success mb-0">Semua produk stoknya cukup.</div>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Produk</th>
+                                            <th>Stok</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($lowStockProducts as $product)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $product->name }}</td>
+                                                <td>{{ $product->stock }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <a href="{{ route('employee.products') }}" class="btn btn-primary w-100">List Products</a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ route('employee.transactions.create') }}" class="btn btn-success w-100">Create Transaction</a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ route('employee.orders') }}" class="btn btn-info w-100">Transaction History</a>
             </div>
         </div>
     </div>

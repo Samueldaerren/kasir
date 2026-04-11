@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -10,9 +11,33 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 
 class EmployeeOrdersExport implements FromCollection, WithHeadings, WithMapping
 {
+    private $fromDate;
+    private $toDate;
+    private $date;
+
+    public function __construct(array $filters = [])
+    {
+        $this->fromDate = $filters['from_date'] ?? null;
+        $this->toDate = $filters['to_date'] ?? null;
+        $this->date = $filters['date'] ?? null;
+    }
+
     public function collection()
     {
-        return Order::with('customer')->where('employee_id', Auth::id())->get();
+        $query = Order::with('customer')->where('employee_id', Auth::id());
+
+        if ($this->fromDate && $this->toDate) {
+            $query->whereDate('sale_date', '>=', Carbon::parse($this->fromDate))
+                  ->whereDate('sale_date', '<=', Carbon::parse($this->toDate));
+        } elseif ($this->fromDate) {
+            $query->whereDate('sale_date', '>=', Carbon::parse($this->fromDate));
+        } elseif ($this->toDate) {
+            $query->whereDate('sale_date', '<=', Carbon::parse($this->toDate));
+        } elseif ($this->date) {
+            $query->whereDate('sale_date', Carbon::parse($this->date));
+        }
+
+        return $query->get();
     }
 
     public function headings(): array

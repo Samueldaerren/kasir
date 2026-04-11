@@ -22,7 +22,23 @@
     <div class="container mt-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1>Order History</h1>
-            <a href="{{ route('admin.orders.export') }}" class="btn btn-success">Export Excel</a>
+
+            <form method="GET" action="{{ route('admin.orders') }}" class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label for="from_date" class="form-label small mb-1">Start Date</label>
+                    <input id="from_date" type="date" name="from_date" class="form-control form-control-sm" value="{{ $fromDate ?? '' }}">
+                </div>
+                <div class="col-auto">
+                    <label for="to_date" class="form-label small mb-1">End Date</label>
+                    <input id="to_date" type="date" name="to_date" class="form-control form-control-sm" value="{{ $toDate ?? '' }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ route('admin.orders.export', ['from_date' => $fromDate ?? null, 'to_date' => $toDate ?? null, 'date' => $date ?? null]) }}" class="btn btn-success btn-sm">Export Excel</a>
+                </div>
+            </form>
         </div>
         <table class="table">
             <thead>
